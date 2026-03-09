@@ -79,16 +79,16 @@ These additions were chosen to better reflect the ranges you uploaded, including
 ### 2.1 EQ tank
 For every state variable $(C_i)$:
 
-$rac{dC_{EQ,i}}{dt} = rac{Q}{V_{EQ}}(C_{in,i} - C_{EQ,i})$
+$rac{dC_{EQ,i}}{dt} = rac{Q}{V_{EQ}} \left( C_{in,i} - C_{EQ,i} \right)$
 
 This damps short-timescale fluctuations before they reach the bioreactor.
 
 ### 2.2 MBR block
 For the MBR, the general form is:
 
-$rac{dC_{MBR,i}}{dt} = rac{Q}{V_{MBR}}(C_{EQ,i} - C_{MBR,i}) - r_i$
+$rac{dC_{MBR,i}}{dt} = rac{Q}{V_{MBR}} \left( C_{EQ,i} - C_{MBR,i} \right) - r_i$
 
-where reaction terms \(r_i\) are empirical and species-specific.
+where reaction terms $(r_i)$ are empirical and species-specific.
 
 #### Organics
 - BOD and biodegradable COD decay faster than inert COD.
@@ -109,24 +109,18 @@ where reaction terms \(r_i\) are empirical and species-specific.
 ### 2.3 Inhibition law
 Biological performance is reduced by disinfectants / toxicants:
 
-\[
-I = rac{1}{1 + a_{ph}C_{ph} + a_{fo}C_{fo} + a_{gl}C_{gl} + a_{det}C_{det} + a_{Pb}C_{Pb}}
-\]
+$I = rac{1}{1 + a_{ph}C_{ph} + a_{fo}C_{fo} + a_{gl}C_{gl} + a_{det}C_{det} + a_{Pb}C_{Pb}}$
 
 This captures the idea that hospital disinfectants can suppress biological treatment.
 
 ### 2.4 Fouling indicator
 A simple empirical fouling state \(F\) evolves as:
 
-\[
-rac{dF}{dt} = a_f\,f(SS, Oils, Detergent) - b_f F
-\]
+$rac{dF}{dt} = a_f\,f(SS, Oils, Detergent) - b_f F$
 
 and MBR performance is multiplied by a fouling factor:
 
-\[
-f_{foul} = rac{1}{1 + \gamma F}
-\]
+$f_{foul} = rac{1}{1 + \gamma F}$
 
 This is not a mechanistic membrane model, but it improves realism.
 
