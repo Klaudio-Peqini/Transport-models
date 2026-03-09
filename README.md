@@ -77,20 +77,20 @@ These additions were chosen to better reflect the ranges you uploaded, including
 ## 2. Mathematical model
 
 ### 2.1 EQ tank
-For every state variable \(C_i\):
+For every state variable $(C_i)$:
 
-\[
+$
 rac{dC_{EQ,i}}{dt} = rac{Q}{V_{EQ}}(C_{in,i} - C_{EQ,i})
-\]
+$
 
 This damps short-timescale fluctuations before they reach the bioreactor.
 
 ### 2.2 MBR block
 For the MBR, the general form is:
 
-\[
+$
 rac{dC_{MBR,i}}{dt} = rac{Q}{V_{MBR}}(C_{EQ,i} - C_{MBR,i}) - r_i
-\]
+$
 
 where reaction terms \(r_i\) are empirical and species-specific.
 
