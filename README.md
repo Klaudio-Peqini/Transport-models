@@ -79,14 +79,14 @@ These additions were chosen to better reflect the ranges you uploaded, including
 ### 2.1 EQ tank
 For every state variable $(C_i)$:
 
-$rac{dC_{EQ,i}}{dt} = rac{Q}{V_{EQ}} \left( C_{in,i} - C_{EQ,i} \right)$
+$\frac{dC_{EQ,i}}{dt} = \frac{Q}{V_{EQ}} \left( C_{in,i} - C_{EQ,i} \right)$
 
 This damps short-timescale fluctuations before they reach the bioreactor.
 
 ### 2.2 MBR block
 For the MBR, the general form is:
 
-$rac{dC_{MBR,i}}{dt} = rac{Q}{V_{MBR}} \left( C_{EQ,i} - C_{MBR,i} \right) - r_i$
+$\frac{dC_{MBR,i}}{dt} = \frac{Q}{V_{MBR}} \left( C_{EQ,i} - C_{MBR,i} \right) - r_i$
 
 where reaction terms $(r_i)$ are empirical and species-specific.
 
@@ -109,40 +109,34 @@ where reaction terms $(r_i)$ are empirical and species-specific.
 ### 2.3 Inhibition law
 Biological performance is reduced by disinfectants / toxicants:
 
-$I = rac{1}{1 + a_{ph}C_{ph} + a_{fo}C_{fo} + a_{gl}C_{gl} + a_{det}C_{det} + a_{Pb}C_{Pb}}$
+$I = \frac{1}{1 + a_{ph}C_{ph} + a_{fo}C_{fo} + a_{gl}C_{gl} + a_{det}C_{det} + a_{Pb}C_{Pb}}$
 
 This captures the idea that hospital disinfectants can suppress biological treatment.
 
 ### 2.4 Fouling indicator
 A simple empirical fouling state \(F\) evolves as:
 
-$rac{dF}{dt} = a_f\,f(SS, Oils, Detergent) - b_f F$
+$\frac{dF}{dt} = a_f\,f(SS, Oils, Detergent) - b_f F$
 
 and MBR performance is multiplied by a fouling factor:
 
-$f_{foul} = rac{1}{1 + \gamma F}$
+$f_{foul} = \frac{1}{1 + \gamma F}$
 
 This is not a mechanistic membrane model, but it improves realism.
 
 ### 2.5 AOP block
 The AOP block applies pseudo-first-order polishing:
 
-\[
-C_{out,i} = C_{in,i}\exp(-k_{AOP,i}	au_{AOP})
-\]
+$C_{out,i} = C_{in,i}\exp(-k_{AOP,i}	au_{AOP})$
 
-with species-specific \(k_{AOP,i}\). Oxidation strength can be increased from the CLI.
+with species-specific $(k_{AOP,i})$. Oxidation strength can be increased from the CLI.
 
 ### 2.6 GAC block
 Selected compounds undergo breakthrough-type polishing:
 
-\[
-F_i(t)=rac{1}{1+\exp(k_{Th,i}(	au_i^* - t))}
-\]
+$F_i(t)=\frac{1}{1+\exp(k_{Th,i} \left(	au_i^* - t \right))}$
 
-\[
-C_{out,i}=C_{in,i}F_i(t)
-\]
+$C_{out,i}=C_{in,i}F_i(t)$
 
 This is still a reduced adsorption model, but it is more informative than a static efficiency.
 
