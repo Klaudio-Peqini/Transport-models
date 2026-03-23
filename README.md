@@ -26,7 +26,7 @@ The point of collecting both models in one repository is not accidental. They ar
 Earlier work in this project focused on a **hospital wastewater treatment model** with explicit process units.  
 The new request from the professor adds a second, more theoretical layer:
 
-> implement the **analytical Buckley–Leverett solution** for polymer flooding in Python and relate it conceptually to the transport ideas already used in the wastewater model.
+> implement the **analytical Buckley–Leverett solution** for polymer flooding in python3 and relate it conceptually to the transport ideas already used in the wastewater model.
 
 This repository therefore serves two goals at once:
 
@@ -269,30 +269,30 @@ It demonstrates that both systems share:
 
 ## 7. Running the code from terminal
 
-No virtual environment is required if you use `PYTHONPATH=src`.
+No virtual environment is required if you use `python3PATH=src`.
 
 ### 7.1 Hospital wastewater model
 
 ```bash
-PYTHONPATH=src python -m hospital_wwtp.cli simulate --scenario nominal --output-dir outputs
+python3PATH=src python3 -m hospital_wwtp.cli simulate --scenario nominal --output-dir outputs
 ```
 
 ### 7.2 Analytical Buckley–Leverett model
 
 ```bash
-PYTHONPATH=src python -m polymer_bl.cli --mu-w 1 --mu-wp 12 --mu-o 5 --output-dir outputs_polymer
+python3PATH=src python3 -m polymer_bl.cli --mu-w 1 --mu-wp 12 --mu-o 5 --output-dir outputs_polymer
 ```
 
 ### 7.3 Direct example script for Buckley–Leverett
 
 ```bash
-PYTHONPATH=src python examples/run_polymer_example.py
+python3PATH=src python3 examples/run_polymer_example.py
 ```
 
 ### 7.4 Direct bridge example
 
 ```bash
-PYTHONPATH=src python examples/run_transport_bridge_example.py
+python3PATH=src python3 examples/run_transport_bridge_example.py
 ```
 
 ---
@@ -300,7 +300,7 @@ PYTHONPATH=src python examples/run_transport_bridge_example.py
 ## 8. Useful command-line flags for the polymer model
 
 ```bash
-PYTHONPATH=src python -m polymer_bl.cli \
+python3PATH=src python3 -m polymer_bl.cli \
   --phi 0.20 \
   --L 100 \
   --u 1e-5 \
