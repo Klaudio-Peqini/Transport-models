@@ -1,0 +1,233 @@
+
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[albanian,english]{babel}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{ifthen}
+
+\title{Zgjidhja analitike Buckley--Leverett për \textit{polymer flooding}\\dhe lidhja me modelimin e ujërave spitalore}
+\author{Klaudio Peqini}
+\institute{Material për diskutim me profesorin}
+\date{\today}
+
+\newcommand{\safeinclude}[2][0.92\textwidth]{%
+  \IfFileExists{#2}{\includegraphics[width=#1,height=0.72\textheight,keepaspectratio]{#2}}%
+  {\fbox{\parbox[c][0.45\textheight][c]{0.75\textwidth}{\centering Figura \texttt{#2} nuk u gjet.\\Vendoseni në të njëjtin direktor me këtë skedar ose korrigjoni rrugën.}}}%
+}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Motivimi shkencor}
+\begin{itemize}
+  \item Profesori kërkoi implementimin e zgjidhjes analitike Buckley--Leverett për \textit{polymer flooding} në Python.
+  \item Synimi kryesor është të përshkruhet zhvendosja 1D e naftës nga uji/polimieri në medium poroz, duke përdorur:
+  \begin{itemize}
+    \item metodën e karakteristikave;
+    \item kushtin e tangentës së Welge për formimin e goditjes (\textit{shock});
+    \item efektin e rritjes së viskozitetit të fazës ujore për shkak të polimerit.
+  \end{itemize}
+  \item Paralelisht, u kërkua që ky model të lidhet konceptualisht me paketën ekzistuese të ujërave spitalore, ku janë studiuar \textit{frontet e breakthrough}-ut dhe transporti i ndotësve.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Hipotezat e modelit Buckley--Leverett}
+\begin{block}{Supozimet bazë}
+\begin{itemize}
+  \item rrjedhje 1D, e pakompresueshme;
+  \item shpejtësi totale Darcy konstante;
+  \item pa shpërhapje, pa adsorbim, pa degradim;
+  \item viskozitet konstant efektiv i ujit me polimer, $\mu_w^p > \mu_w$;
+  \item permeabilitete relative të tipit Corey.
+\end{itemize}
+\end{block}
+
+\begin{equation*}
+\phi \frac{\partial S_w}{\partial t} + \frac{\partial}{\partial x}\left(u f_w(S_w)\right)=0
+\end{equation*}
+
+ku:
+\[
+f_w(S_w)=\frac{\lambda_w}{\lambda_w+\lambda_o}, \qquad
+\lambda_w=\frac{k_{rw}}{\mu_w^{(*)}}, \qquad
+\lambda_o=\frac{k_{ro}}{\mu_o}.
+\]
+\end{frame}
+
+\begin{frame}{Permeabilitetet relative dhe rrjedha fraksionare}
+Saturimi efektiv:
+\[
+S_e=\frac{S_w-S_{wi}}{1-S_{wi}-S_{or}}.
+\]
+
+Ligjet Corey:
+\[
+k_{rw}=k_{rw0} S_e^{n_w}, \qquad
+k_{ro}=k_{ro0}(1-S_e)^{n_o}.
+\]
+
+\begin{itemize}
+  \item Rritja e viskozitetit të ujit nga polimeri ul mobilitetin e fazës ujore.
+  \item Kjo ndryshon formën e kurbës $f_w(S_w)$.
+  \item Si pasojë vonohet \textit{breakthrough}-u i ujit dhe përmirësohet rikuperimi.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Metoda e karakteristikave dhe formimi i \textit{shock}-ut}
+Nga PDE-ja rezulton shpejtësia karakteristike:
+\[
+\frac{x}{t}=\frac{u}{\phi}\frac{df_w}{dS_w}.
+\]
+
+\begin{itemize}
+  \item Çdo vlerë e saturimit lëviz me shpejtësi të ndryshme.
+  \item Për shkak të jolinearitetit, karakteristikat mund të kryqëzohen.
+  \item Në këtë pikë zgjidhja klasike prishet dhe formohet një front diskret (\textit{shock}).
+\end{itemize}
+
+Kushti i Welge:
+\[
+\left.\frac{df_w}{dS_w}\right|_{S_{wf}}
+=
+\frac{f_w(S_{wf})-f_w(S_{wi})}{S_{wf}-S_{wi}}.
+\]
+
+Shpejtësia dimensionless e frontit:
+\[
+v_D^{shock}=\frac{f_w(S_{wf})-f_w(S_{wi})}{S_{wf}-S_{wi}}.
+\]
+\end{frame}
+
+\begin{frame}{Çfarë u korrigjua në kodin fillestar}
+\begin{itemize}
+  \item U rikthye forma standarde e permeabiliteteve relative Corey; kodi fillestar i normalizonte gabimisht me shumën e dy fazave.
+  \item U zëvendësua identifikimi jo i qëndrueshëm i \textit{shock}-ut me kriterin e vërtetë të tangentës së Welge.
+  \item U eliminua gabimi i indeksimit të tipit \verb|fw[S_wf]|, ku \verb|S_wf| ishte vlerë reale dhe jo indeks.
+  \item U rindërtua profili $S_w(x,t)$ duke inveruar në mënyrë konsistente lidhjen karakteristike.
+  \item U bë i qëndrueshëm llogaritja e \textit{water cut}, rikuperimit kumulativ dhe PVI në \textit{breakthrough}.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Krahasimi i kurbave të rrjedhës fraksionare}
+\centering
+\safeinclude{fractional_flow_comparison.png}
+\end{frame}
+
+\begin{frame}{Interpretimi fizik i kurbës $f_w(S_w)$}
+\begin{itemize}
+  \item Tangjentja e Welge përcakton saturimin kritik $S_{wf}$ ku lind fronti i mprehtë.
+  \item Në rastin me polimer, kurba e rrjedhës fraksionare zhvendoset në mënyrë të tillë që:
+  \begin{itemize}
+    \item \textit{breakthrough}-u vonohet;
+    \item faktori i rikuperimit në të njëjtën PVI rritet;
+    \item ulja e raportit të mobilitetit përmirëson stabilitetin e zhvendosjes.
+  \end{itemize}
+  \item Ky është pikërisht roli fizik i polimerit në \textit{enhanced oil recovery}.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Profilet e saturimit}
+\centering
+\safeinclude{saturation_profiles_comparison.png}
+\end{frame}
+
+\begin{frame}{Kurba të prodhimit: breakthrough dhe rikuperimi}
+\centering
+\safeinclude{production_curves_comparison.png}
+\end{frame}
+
+\begin{frame}{Rezultatet kryesore numerike}
+\begin{itemize}
+  \item Paketa e re prodhon automatikisht tabela:
+  \begin{itemize}
+    \item \verb|polymer_summary.csv|
+    \item \verb|fractional_flow_table.csv|
+    \item \verb|polymer_production_curves.csv|
+    \item \verb|polymer_profiles.csv|
+  \end{itemize}
+  \item Daljet kryesore janë:
+  \begin{itemize}
+    \item saturimi i \textit{shock}-ut $S_{wf}$;
+    \item PVI në \textit{breakthrough};
+    \item \textit{water cut} në prodhues;
+    \item faktori i rikuperimit $RF$.
+  \end{itemize}
+  \item Këto rezultate janë të përshtatshme për interpretim fizik, raporte teknike dhe grafikë për publikim/prezantim.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Lidhja direkte me modelin ekzistues të ujërave spitalore}
+\begin{block}{Ideja qendrore}
+Dy modelet i përkasin së njëjtës familje matematikore: \textbf{ligje ruajtjeje me fronte të mprehta dhe breakthrough}.
+\end{block}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Buckley--Leverett & Modeli i ujërave spitalore \\
+\midrule
+front saturimi $S_w$ & front përqendrimi / breakthrough \\
+\textit{water cut} në prodhues & breakthrough i CBZ/DCF në dalje \\
+rikuperim kumulativ i naftës & heqje kumulative e ndotësve \\
+karakteristika dhe shock & front jolinear i transportit \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item Në paketën e re u shtua edhe një skript lidhës (\verb|run_transport_bridge_example.py|).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Figura lidhëse: transporti në medium poroz kundrejt breakthrough-ut të ndotësve}
+\centering
+\safeinclude{transport_bridge.png}
+\end{frame}
+
+\begin{frame}{Pse kjo lidhje është e rëndësishme}
+\begin{itemize}
+  \item Tregon se puna e kryer më parë për ujërat spitalore nuk është e shkëputur nga detyra e re.
+  \item Përkundrazi, të dyja problemet:
+  \begin{itemize}
+    \item përshkruajnë propagimin e fronteve;
+    \item kërkojnë interpretim të \textit{breakthrough}-ut;
+    \item analizohen përmes madhësive pa dimension si PVI ose kohë e reduktuar.
+  \end{itemize}
+  \item Kjo e vendos detyrën e re në një kuadër më të gjerë të modelimit të transportit jolinear.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Përmirësime të mundshme të mëtejshme}
+\begin{itemize}
+  \item Shtimi i adsorbimit të polimerit dhe vonesës (\textit{retardation}).
+  \item Shtimi i shpërhapjes për krahasim analitik--numerik.
+  \item Kalimi nga viskozitet konstant në reologji më realiste të polimerit.
+  \item Futja e \textit{slug injection} dhe \textit{chase water}.
+  \item Krahasimi me zgjidhje plotësisht numerike të tipit finite-volume.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Përfundime}
+\begin{itemize}
+  \item U ndërtua një implementim i pastër dhe fizikisht i qëndrueshëm i modelit Buckley--Leverett për \textit{polymer flooding}.
+  \item U prodhuan figura të standardit të lartë për:
+  \begin{itemize}
+    \item rrjedhën fraksionare,
+    \item profilet e saturimit,
+    \item \textit{water cut} dhe rikuperimin.
+  \end{itemize}
+  \item U vendos lidhja e drejtpërdrejtë me paketën ekzistuese të ujërave spitalore përmes logjikës së përbashkët të transportit dhe \textit{breakthrough}-ut.
+  \item Rezultati final është një paketë Python më e fortë si nga ana shkencore, ashtu edhe nga ana e prezantimit.
+\end{itemize}
+\end{frame}
+
+\end{document}

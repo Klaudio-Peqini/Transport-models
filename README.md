@@ -1,163 +1,68 @@
-# hospital-wwtp
+# Transport Models Suite: Hospital Wastewater + Analytical Buckley–Leverett Polymer Flooding
 
-A Python package for **dynamic simulation of hospital wastewater treatment** using an explicitly staged process train:
+This repository brings together **two complementary modelling layers**:
 
-> **Influent → Equalization (EQ) → Membrane Bioreactor (MBR) → Advanced Oxidation Process (AOP) → Granular Activated Carbon (GAC)**
+1. **`hospital_wwtp`**  
+   A dynamic multi-component treatment-train simulator for hospital wastewater:
+   \[
+   \mathrm{EQ} \rightarrow \mathrm{MBR} \rightarrow \mathrm{AOP} \rightarrow \mathrm{GAC}
+   \]
+   with realistic diurnal influent structure, toxic-load inhibition, stage-specific polishing, and CLI control.
 
-This package is a research-friendly and GitHub-ready rewrite of the earlier MATLAB prototype, with several important realism upgrades:
+2. **`polymer_bl`**  
+   A corrected and publication-oriented **analytical Buckley–Leverett implementation** for 1D polymer flooding in porous media using:
+   - Corey relative permeabilities
+   - a physically consistent fractional-flow formulation
+   - the **method of characteristics**
+   - the **Welge tangent condition** for shock / breakthrough
+   - waterflood vs polymer-flood comparison
+   - publication-quality plots
 
-- explicit **EQ tank dynamics** instead of a conceptual buffer only
-- **non-sinusoidal hospital-style influent** by default, with daily structure, random variability, and optional shock loads
-- richer multi-component state vector inspired by the parameter sheet you provided
-- **split COD** into biodegradable and inert fractions
-- explicit **NH4 → NO3** conversion and simple denitrification
-- simple **inhibition law** from disinfectants and toxic compounds
-- empirical **membrane fouling indicator**
-- **species-specific AOP and GAC** behaviour
-- terminal control through **argparse / CLI**
-
-The model is still intentionally mid-complexity. It is designed for:
-
-- thesis and teaching work
-- engineering sensitivity studies
-- figure generation for presentations and reports
-- GitHub publication and extension
-
-It is **not** intended to replace a full ASM/CFD/industrial design simulator.
+The point of collecting both models in one repository is not accidental. They are connected by the same underlying mathematical language:
+**nonlinear transport, front propagation, breakthrough, and cumulative recovery / removal**.
 
 ---
 
-## 1. Why this version is more realistic than the preliminary one
+## 1. Why this repository exists
 
-The original prototype was useful, but it had several simplifications that could produce visually unrealistic behaviour, especially smooth sinusoidal time series. This version addresses the main issues:
+Earlier work in this project focused on a **hospital wastewater treatment model** with explicit process units.  
+The new request from the professor adds a second, more theoretical layer:
 
-### Influent realism
-Instead of a pure sinusoid, the default influent uses:
-- a hospital-like daily schedule
-- meal-related organic peaks
-- cleaning/disinfection peaks
-- random multiplicative variability
-- optional shock events for toxicants / pharmaceuticals
+> implement the **analytical Buckley–Leverett solution** for polymer flooding in Python and relate it conceptually to the transport ideas already used in the wastewater model.
 
-### Process realism
-This package now includes:
-- **EQ** as a real dynamic mixing volume
-- **MBR** with reaction + transport + inhibition + fouling
-- **AOP** with species-specific pseudo-first-order oxidation
-- **GAC** with species-specific sigmoidal breakthrough behaviour
+This repository therefore serves two goals at once:
 
-### State realism
-The model now tracks or derives the following quantities:
-
-- BOD
-- biodegradable COD
-- inert COD
-- total COD (derived)
-- TOC
-- NH4
-- NO3
-- PO4
-- suspended solids (SS)
-- alkalinity
-- conductivity
-- phenol
-- formaldehyde
-- glutaraldehyde
-- anionic detergent
-- oils / fats
-- Pb
-- carbamazepine (CBZ)
-- diclofenac (DCF)
-- pH (derived)
-
-These additions were chosen to better reflect the ranges you uploaded, including BOD, COD, pH, phosphate, nitrate, NH4, suspended solids, conductivity, TOC, phenols, formaldehyde, glutaraldehyde, detergents, oils, and lead.
+- provide an operational environmental-engineering simulator
+- provide a compact nonlinear-transport reference implementation in porous media
 
 ---
 
-## 2. Mathematical model
-
-### 2.1 EQ tank
-For every state variable $(C_i)$:
-
-$\frac{dC_{EQ,i}}{dt} = \frac{Q}{V_{EQ}} \left( C_{in,i} - C_{EQ,i} \right)$
-
-This damps short-timescale fluctuations before they reach the bioreactor.
-
-### 2.2 MBR block
-For the MBR, the general form is:
-
-$\frac{dC_{MBR,i}}{dt} = \frac{Q}{V_{MBR}} \left( C_{EQ,i} - C_{MBR,i} \right) - r_i$
-
-where reaction terms $(r_i)$ are empirical and species-specific.
-
-#### Organics
-- BOD and biodegradable COD decay faster than inert COD.
-- TOC removal is moderate.
-- SS and oils are reduced more strongly due to membrane retention / empirical removal.
-
-#### Nitrogen
-- NH4 is converted to NO3 by nitrification.
-- NO3 is partly consumed by denitrification.
-- nitrification is pH-sensitive.
-
-#### Phosphorus
-- PO4 is removed by a first-order term plus a coupling to SS removal.
-
-#### Toxic compounds and pharmaceuticals
-- phenol, formaldehyde, glutaraldehyde, detergents, Pb, CBZ and DCF all have specific apparent removal rates.
-
-### 2.3 Inhibition law
-Biological performance is reduced by disinfectants / toxicants:
-
-$I = \frac{1}{1 + a_{ph}C_{ph} + a_{fo}C_{fo} + a_{gl}C_{gl} + a_{det}C_{det} + a_{Pb}C_{Pb}}$
-
-This captures the idea that hospital disinfectants can suppress biological treatment.
-
-### 2.4 Fouling indicator
-A simple empirical fouling state \(F\) evolves as:
-
-$\frac{dF}{dt} = a_f\,f(SS, Oils, Detergent) - b_f F$
-
-and MBR performance is multiplied by a fouling factor:
-
-$f_{foul} = \frac{1}{1 + \gamma F}$
-
-This is not a mechanistic membrane model, but it improves realism.
-
-### 2.5 AOP block
-The AOP block applies pseudo-first-order polishing:
-
-$C_{out,i} = C_{in,i}\exp(-k_{AOP,i}	au_{AOP})$
-
-with species-specific $(k_{AOP,i})$. Oxidation strength can be increased from the CLI.
-
-### 2.6 GAC block
-Selected compounds undergo breakthrough-type polishing:
-
-$F_i(t)=\frac{1}{1+\exp(k_{Th,i} \left(	au_i^* - t \right))}$
-
-$C_{out,i}=C_{in,i}F_i(t)$
-
-This is still a reduced adsorption model, but it is more informative than a static efficiency.
-
----
-
-## 3. Repository structure
+## 2. Folder structure
 
 ```text
-hospital_wwtp_python_package_v2/
-├── src/hospital_wwtp/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── influent.py
-│   ├── simulation.py
-│   ├── metrics.py
-│   ├── plotting.py
-│   ├── io_utils.py
-│   └── cli.py
+transport_models_suite/
+├── src/
+│   ├── hospital_wwtp/
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   ├── influent.py
+│   │   ├── simulation.py
+│   │   ├── metrics.py
+│   │   ├── plotting.py
+│   │   ├── io_utils.py
+│   │   └── cli.py
+│   └── polymer_bl/
+│       ├── __init__.py
+│       ├── model.py
+│       ├── plotting.py
+│       └── cli.py
 ├── examples/
-│   └── run_example.py
+│   ├── run_example.py
+│   ├── run_polymer_example.py
+│   └── run_transport_bridge_example.py
 ├── outputs/
+├── outputs_polymer/
+├── outputs_bridge/
 ├── pyproject.toml
 ├── requirements.txt
 ├── LICENSE
@@ -166,215 +71,362 @@ hospital_wwtp_python_package_v2/
 
 ---
 
-## 4. Installation
+## 3. Analytical Buckley–Leverett model: what is implemented
 
-### Option A — run without installing the package
-From the project root:
+### 3.1 Governing equation
 
-```bash
-PYTHONPATH=src python examples/run_example.py --scenario nominal
-```
+For 1D incompressible displacement with constant total Darcy velocity \(u\), no gravity, no dispersion, no adsorption, no degradation, and constant polymer-modified water viscosity, the water saturation satisfies
 
-or
+\[
+\phi \frac{\partial S_w}{\partial t}
++
+\frac{\partial}{\partial x}\Big(u f_w(S_w)\Big)=0.
+\]
+
+Here:
+
+- \(S_w\) is water saturation,
+- \(\phi\) is porosity,
+- \(u\) is Darcy velocity,
+- \(f_w\) is the water fractional-flow function.
+
+### 3.2 Corey relative permeability model
+
+The implementation uses the effective saturation
+
+\[
+S_e=\frac{S_w-S_{wi}}{1-S_{wi}-S_{or}},
+\qquad 0 \le S_e \le 1
+\]
+
+and Corey laws
+
+\[
+k_{rw}=k_{rw0} S_e^{n_w}, \qquad
+k_{ro}=k_{ro0}(1-S_e)^{n_o}.
+\]
+
+Mobilities are
+
+\[
+\lambda_w=\frac{k_{rw}}{\mu_w^{(*)}}, \qquad
+\lambda_o=\frac{k_{ro}}{\mu_o},
+\]
+
+where \(\mu_w^{(*)}\) is either the waterflood viscosity \(\mu_w\) or the polymer-modified viscosity \(\mu_w^p\).
+
+Then the fractional flow is
+
+\[
+f_w(S_w)=\frac{\lambda_w}{\lambda_w+\lambda_o}.
+\]
+
+### 3.3 Method of characteristics
+
+The nonlinear PDE is solved analytically by characteristics:
+
+\[
+\frac{x}{t}=\frac{u}{\phi}\frac{df_w}{dS_w}.
+\]
+
+Different saturation states move with different characteristic speeds.  
+Because those speeds are nonlinear functions of \(S_w\), a **shock front** forms.
+
+### 3.4 Welge tangent / shock condition
+
+The shock saturation \(S_{wf}\) is identified numerically from the tangency condition
+
+\[
+\left.\frac{df_w}{dS_w}\right|_{S_{wf}}
+=
+\frac{f_w(S_{wf})-f_w(S_{wi})}{S_{wf}-S_{wi}}.
+\]
+
+This gives the dimensionless shock speed
+
+\[
+v_D^{\text{shock}}
+=
+\frac{f_w(S_{wf})-f_w(S_{wi})}{S_{wf}-S_{wi}},
+\]
+
+and the breakthrough pore volume injected (PVI)
+
+\[
+\mathrm{PVI}_{bt}=\frac{1}{v_D^{\text{shock}}}.
+\]
+
+### 3.5 Production history
+
+The production-side water cut is obtained from the outlet saturation after breakthrough through the characteristic relation
+
+\[
+\frac{df_w}{dS_w}=\frac{1}{t_D},
+\qquad
+t_D=\frac{ut}{\phi L}.
+\]
+
+The recovery factor is computed by numerical quadrature of the oil-cut history.
+
+---
+
+## 4. What was corrected relative to the originally suggested code
+
+The professor’s sketch was a useful starting point, but several points required cleanup for a robust research-grade implementation.
+
+### 4.1 Correct Corey relative permeabilities
+The original code normalized Corey powers by a sum,
+which is not the standard Corey model.  
+This version uses:
+
+\[
+k_{rw}=k_{rw0} S_e^{n_w}, \qquad
+k_{ro}=k_{ro0}(1-S_e)^{n_o}.
+\]
+
+### 4.2 Proper Welge shock criterion
+The shock is not identified by `argmax(dfw * Sw / fw)` in a robust way.  
+Instead, this package evaluates the **difference between derivative and secant slope** and selects the best tangency point.
+
+### 4.3 Indexing bug removed
+The original sketch used expressions like `fw[S_wf]`, where `S_wf` is a floating-point saturation value, not an array index.  
+This package consistently uses interpolation in saturation space.
+
+### 4.4 Saturation profiles built from characteristic inversion
+The original loop for \(S_w(x,t)\) was not fully consistent with the rarefaction–shock structure.  
+The new implementation:
+- constructs the rarefaction branch explicitly,
+- sorts the characteristic-speed relation,
+- interpolates the physically admissible profile,
+- then imposes the shock connection to the initial state.
+
+### 4.5 Recovery calculation made dimensionally consistent
+The original `welge_recovery` block mixed geometric assumptions and dimensionless quantities in a way that was not robust.  
+This repository computes:
+- water cut,
+- oil cut,
+- cumulative oil,
+- recovery factor,
+using the standard dimensionless time \(t_D=\mathrm{PVI}\).
+
+---
+
+## 5. Publication-quality outputs produced by `polymer_bl`
+
+Running the polymer examples generates:
+
+- `fractional_flow_comparison.png`
+- `saturation_profiles_comparison.png`
+- `production_curves_comparison.png`
+- `polymer_summary.csv`
+- `fractional_flow_table.csv`
+- `polymer_production_curves.csv`
+- `polymer_profiles.csv`
+
+These plots are intended for:
+- reports,
+- presentations,
+- thesis chapters,
+- side-by-side comparison with the hospital-wastewater breakthrough logic.
+
+---
+
+## 6. How the Buckley–Leverett model connects to the wastewater model
+
+This is the most important conceptual bridge in the repository.
+
+### 6.1 Common mathematical structure
+
+The Buckley–Leverett equation is a nonlinear hyperbolic conservation law:
+
+\[
+\frac{\partial U}{\partial t} + \frac{\partial F(U)}{\partial x}=0.
+\]
+
+A simplified pollutant-transport equation without diffusion/reaction has the same structure:
+
+\[
+\phi\frac{\partial C}{\partial t}+u\frac{\partial C}{\partial x}=0.
+\]
+
+Once adsorption, retardation, or nonlinear flux laws are introduced, the wastewater system also becomes a nonlinear transport problem.
+
+### 6.2 Physical analogy
+
+| Porous-media displacement | Wastewater system |
+|---|---|
+| saturation front | contamination / polishing front |
+| water cut at producer | breakthrough at GAC outlet |
+| shock formation | sharp concentration breakthrough |
+| cumulative oil recovery | cumulative contaminant removal |
+| method of characteristics | transport-front interpretation |
+
+### 6.3 Practical bridge implemented here
+
+The script `examples/run_transport_bridge_example.py` runs:
+
+1. the **Buckley–Leverett waterflood vs polymer-flood comparison**  
+2. the **hospital wastewater model**  
+3. a bridge plot, `transport_bridge.png`, showing normalized breakthrough curves on the same dimensionless axis.
+
+This is not claiming the two systems are physically identical.  
+It demonstrates that both systems share:
+- front-propagation logic,
+- breakthrough behaviour,
+- nonlinear transport interpretation.
+
+---
+
+## 7. Running the code from terminal
+
+No virtual environment is required if you use `PYTHONPATH=src`.
+
+### 7.1 Hospital wastewater model
 
 ```bash
 PYTHONPATH=src python -m hospital_wwtp.cli simulate --scenario nominal --output-dir outputs
 ```
 
-### Option B — editable install
+### 7.2 Analytical Buckley–Leverett model
 
 ```bash
-pip install --user -e .
+PYTHONPATH=src python -m polymer_bl.cli --mu-w 1 --mu-wp 12 --mu-o 5 --output-dir outputs_polymer
 ```
 
-then run:
+### 7.3 Direct example script for Buckley–Leverett
 
 ```bash
-hospital-wwtp simulate --scenario nominal --output-dir outputs
+PYTHONPATH=src python examples/run_polymer_example.py
 ```
 
----
-
-## 5. CLI usage
-
-### Single scenario
+### 7.4 Direct bridge example
 
 ```bash
-PYTHONPATH=src python -m hospital_wwtp.cli simulate   --scenario nominal   --duration-h 96   --dt-minutes 5   --flow-m3-day 500   --output-dir outputs
-```
-
-### High-load case with stronger oxidation and larger GAC bed
-
-```bash
-PYTHONPATH=src python -m hospital_wwtp.cli simulate   --scenario high   --oxidation-scale 1.3   --adsorption-scale 1.2   --V-GAC-bed-m3 8   --output-dir outputs/high_case
-```
-
-### Shock scenario
-
-```bash
-PYTHONPATH=src python -m hospital_wwtp.cli simulate   --scenario shock   --shock-hour 42   --shock-width-h 1.0   --shock-multiplier 3.5   --output-dir outputs/shock_case
-```
-
-### Run all scenarios (low / nominal / high / shock)
-
-```bash
-PYTHONPATH=src python -m hospital_wwtp.cli batch --output-dir outputs/batch
+PYTHONPATH=src python examples/run_transport_bridge_example.py
 ```
 
 ---
 
-## 6. Available command-line arguments
-
-### Global simulation control
-- `--scenario {low,nominal,high,shock}`
-- `--influent-mode {hospital,sinusoidal}`
-- `--duration-h`
-- `--dt-minutes`
-- `--flow-m3-day`
-- `--seed`
-- `--noise-sigma`
-
-### Shock-event control
-- `--shock-hour`
-- `--shock-width-h`
-- `--shock-multiplier`
-
-### Process-strength control
-- `--oxidation-scale`
-- `--adsorption-scale`
-- `--inhibition-scale`
-
-### Reactor sizes
-- `--V-EQ-m3`
-- `--V-MBR-m3`
-- `--V-AOP-m3`
-- `--V-GAC-bed-m3`
-
-### Output control
-- `--output-dir`
-- `--no-plots`
-
----
-
-## 7. Example script
-
-A simple example is included:
+## 8. Useful command-line flags for the polymer model
 
 ```bash
-PYTHONPATH=src python examples/run_example.py --scenario nominal --output-dir outputs
+PYTHONPATH=src python -m polymer_bl.cli \
+  --phi 0.20 \
+  --L 100 \
+  --u 1e-5 \
+  --Swi 0.20 \
+  --Sor 0.0 \
+  --nw 2 --no 2 \
+  --krw0 0.8 --kro0 1.0 \
+  --mu-w 1.0 \
+  --mu-wp 15.0 \
+  --mu-o 5.0 \
+  --pvi-max 2.5 \
+  --profile-pvi 0.2 0.5 1.0 1.5 2.0 \
+  --output-dir outputs_polymer/high_polymer_case
 ```
 
-This generates all main tables and figures automatically.
+Meaning of the most important flags:
 
----
-
-## 8. Generated outputs
-
-The package writes:
-
-### Figures
-- `results_trends.png`
-- `micropollutants_trends.png`
-- `effluent_24h_avg.png`
-- `gac_breakthrough.png`
-- `pH_and_fouling.png`
-
-### Tables / CSV files
-- `simulation_timeseries.csv`
-- `stage_24h_average.csv`
-- `removal_summary.csv`
-- `compliance_summary.csv`
-- `risk_summary.csv`
-- `breakthrough_summary.csv`
-- `config_used.json`
-
-These are intended to be presentation-ready and report-friendly.
+- `--mu-w`: baseline water viscosity in cP
+- `--mu-wp`: polymer-modified water viscosity in cP
+- `--mu-o`: oil viscosity in cP
+- `--profile-pvi`: PVI values at which saturation profiles are plotted
+- `--pvi-max`: maximum injected pore volumes for the production curves
 
 ---
 
 ## 9. Interpreting the outputs
 
-### `results_trends.png`
-Shows how key bulk quantities evolve through the plant over time.
+### 9.1 `fractional_flow_comparison.png`
+Shows how polymer thickening modifies the fractional-flow curve and shifts the Welge tangent.  
+A higher polymer viscosity generally:
+- reduces the mobility ratio,
+- delays breakthrough,
+- improves sweep,
+- increases cumulative recovery.
 
-### `micropollutants_trends.png`
-Shows behaviour of toxicants and pharmaceuticals, especially the importance of AOP + GAC polishing.
+### 9.2 `saturation_profiles_comparison.png`
+Shows the saturation front in dimensionless space \(x/L\).  
+Compared with waterflooding, polymer flooding generally displays a more favourable displacement profile.
 
-### `effluent_24h_avg.png`
-Compares final 24-hour average effluent values to target values.
+### 9.3 `production_curves_comparison.png`
+Contains:
+- **water cut vs PVI**
+- **recovery factor vs PVI**
 
-### `gac_breakthrough.png`
-Illustrates when selected adsorbable compounds begin to appear more strongly at the final outlet.
+These are the clearest engineering outputs for discussing improved displacement.
 
-### `pH_and_fouling.png`
-Shows whether biological operation stays in a plausible pH window and whether fouling is trending upward.
-
----
-
-## 10. Practical modelling notes
-
-### What this package is good for
-- scenario comparison
-- sensitivity studies
-- educational demonstrations
-- thesis plots and GitHub publication
-- testing whether EQ/MBR/AOP/GAC process choices are qualitatively consistent
-
-### What this package is not yet
-- a full activated sludge model
-- a membrane-fouling design tool
-- a rigorous adsorption bed simulator
-- a regulatory compliance calculator with field calibration
+### 9.4 `transport_bridge.png`
+Connects the porous-media transport front to the wastewater breakthrough logic by comparing normalized front-like curves.
 
 ---
 
-## 11. Suggested next upgrades
+## 10. Recommended scientific workflow
 
-If you continue developing the repository, the most meaningful upgrades would be:
+A useful workflow for presentations and thesis writing is:
 
-1. calibration to measured hospital wastewater data
-2. explicit biomass / oxygen states in the MBR
-3. separate weekday/weekend occupancy schedules
-4. compound-specific AOP chemistry based on pH / oxidant dose
-5. better GAC mass-balance and capacity tracking
-6. uncertainty propagation or Monte Carlo ensembles
-7. comparison of multiple treatment trains, not only EQ→MBR→AOP→GAC
-
----
-
-## 12. Citation / reuse note
-
-If you upload this to GitHub, it is a good idea to add:
-- `CITATION.cff`
-- `.gitignore`
-- a short discussion in the README explaining that this is a **mid-complexity research prototype**, not a certified design package.
+1. run the wastewater model for the nominal case  
+2. run the polymer analytical model for baseline vs polymer  
+3. generate the bridge plot  
+4. discuss:
+   - the same transport mathematics,
+   - different physical contexts,
+   - why breakthrough curves matter in both.
 
 ---
 
-## 13. Minimal workflow summary
+## 11. Installation
 
-```bash
-unzip hospital_wwtp_python_package_v2.zip
-cd hospital_wwtp_python_package_v2
-pip install --user -r requirements.txt
-PYTHONPATH=src python examples/run_example.py --scenario nominal --output-dir outputs
-```
-
-or, after editable install:
+From the project root:
 
 ```bash
 pip install --user -e .
+```
+
+Then you may run:
+
+```bash
 hospital-wwtp simulate --scenario nominal --output-dir outputs
+polymer-bl --mu-w 1 --mu-wp 12 --mu-o 5 --output-dir outputs_polymer
 ```
 
 ---
 
-## 14. Scientific positioning
+## 12. Minimal dependencies
 
-This repository sits between:
-- a very simple first-order teaching model, and
-- a full-scale mechanistic wastewater treatment simulator.
+- `numpy`
+- `scipy`
+- `pandas`
+- `matplotlib`
 
-That is deliberate.
+They are listed in `requirements.txt` and `pyproject.toml`.
 
-It is complex enough to produce realistic non-sinusoidal transient figures, stagewise removals, risk indicators, and sensitivity studies, while remaining simple enough to be readable, teachable, and extendable.
+---
+
+## 13. Suggested next extensions
+
+### For the porous-media side
+- add adsorption / retardation
+- add dispersion and compare analytical vs numerical fronts
+- add polymer slug followed by chase water
+- add inaccessible pore volume (IPV)
+- add resistance factor / residual resistance factor (RF/RRF)
+
+### For the wastewater side
+- calibrate parameters against measurements
+- add uncertainty propagation
+- add stronger compound-specific AOP/GAC kinetics
+- link pH explicitly to reaction rates
+- extend compliance/risk outputs
+
+---
+
+## 14. Final note
+
+This repository intentionally places **environmental process modelling** and **porous-media transport theory** in the same framework.  
+That is not a software convenience alone; it is a modelling statement:
+
+> the same mathematical structures — conservation laws, fronts, breakthrough, and cumulative response — recur across apparently different physical systems.
+
+That is the main scientific message tying this work together.

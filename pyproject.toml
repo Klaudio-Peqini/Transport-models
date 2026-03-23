@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hospital-wwtp"
-version = "0.2.0"
-description = "Dynamic hospital wastewater treatment train simulator with CLI"
+version = "0.3.0"
+description = "Dynamic hospital wastewater treatment simulator plus analytical Buckley-Leverett polymer flooding toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -19,6 +19,7 @@ dependencies = [
 
 [project.scripts]
 hospital-wwtp = "hospital_wwtp.cli:main"
+polymer-bl = "polymer_bl.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
