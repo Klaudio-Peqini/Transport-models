@@ -75,20 +75,20 @@ transport_models_suite/
 
 ### 3.1 Governing equation
 
-For 1D incompressible displacement with constant total Darcy velocity \(u\), no gravity, no dispersion, no adsorption, no degradation, and constant polymer-modified water viscosity, the water saturation satisfies
+For 1D incompressible displacement with constant total Darcy velocity $u$, no gravity, no dispersion, no adsorption, no degradation, and constant polymer-modified water viscosity, the water saturation satisfies
 
-\[
+$$
 \phi \frac{\partial S_w}{\partial t}
 +
 \frac{\partial}{\partial x}\Big(u f_w(S_w)\Big)=0.
-\]
+$$
 
 Here:
 
-- \(S_w\) is water saturation,
-- \(\phi\) is porosity,
-- \(u\) is Darcy velocity,
-- \(f_w\) is the water fractional-flow function.
+- $S_w$ is water saturation,
+- $\phi$ is porosity,
+- $u$ is Darcy velocity,
+- $f_w$ is the water fractional-flow function.
 
 ### 3.2 Corey relative permeability model
 
