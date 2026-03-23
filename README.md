@@ -4,9 +4,7 @@ This repository brings together **two complementary modelling layers**:
 
 1. **`hospital_wwtp`**  
    A dynamic multi-component treatment-train simulator for hospital wastewater:
-   $
-   \mathrm{EQ} \rightarrow \mathrm{MBR} \rightarrow \mathrm{AOP} \rightarrow \mathrm{GAC}
-   $
+   $\mathrm{EQ} \rightarrow \mathrm{MBR} \rightarrow \mathrm{AOP} \rightarrow \mathrm{GAC}$
    with realistic diurnal influent structure, toxic-load inhibition, stage-specific polishing, and CLI control.
 
 2. **`polymer_bl`**  
