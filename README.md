@@ -164,19 +164,17 @@ The recovery factor is computed by numerical quadrature of the oil-cut history.
 
 ---
 
-## 4. What was corrected relative to the originally suggested code
-
-The professor’s sketch was a useful starting point, but several points required cleanup for a robust research-grade implementation.
+## 4. What has been improved?
 
 ### 4.1 Correct Corey relative permeabilities
 The original code normalized Corey powers by a sum,
 which is not the standard Corey model.  
 This version uses:
 
-\[
+$$
 k_{rw}=k_{rw0} S_e^{n_w}, \qquad
 k_{ro}=k_{ro0}(1-S_e)^{n_o}.
-\]
+$$
 
 ### 4.2 Proper Welge shock criterion
 The shock is not identified by `argmax(dfw * Sw / fw)` in a robust way.  
@@ -187,7 +185,7 @@ The original sketch used expressions like `fw[S_wf]`, where `S_wf` is a floating
 This package consistently uses interpolation in saturation space.
 
 ### 4.4 Saturation profiles built from characteristic inversion
-The original loop for \(S_w(x,t)\) was not fully consistent with the rarefaction–shock structure.  
+The original loop for $S_w(x,t)$ was not fully consistent with the rarefaction–shock structure.  
 The new implementation:
 - constructs the rarefaction branch explicitly,
 - sorts the characteristic-speed relation,
@@ -195,13 +193,13 @@ The new implementation:
 - then imposes the shock connection to the initial state.
 
 ### 4.5 Recovery calculation made dimensionally consistent
-The original `welge_recovery` block mixed geometric assumptions and dimensionless quantities in a way that was not robust.  
+The original `welge_recovery` block mixed geometric assumptions and dimensionless quantities in an unrobust way.  
 This repository computes:
 - water cut,
 - oil cut,
 - cumulative oil,
 - recovery factor,
-using the standard dimensionless time \(t_D=\mathrm{PVI}\).
+using the standard dimensionless time $t_D=\mathrm{PVI}$.
 
 ---
 
@@ -233,15 +231,15 @@ This is the most important conceptual bridge in the repository.
 
 The Buckley–Leverett equation is a nonlinear hyperbolic conservation law:
 
-\[
+$$
 \frac{\partial U}{\partial t} + \frac{\partial F(U)}{\partial x}=0.
-\]
+$$
 
 A simplified pollutant-transport equation without diffusion/reaction has the same structure:
 
-\[
+$$
 \phi\frac{\partial C}{\partial t}+u\frac{\partial C}{\partial x}=0.
-\]
+$$
 
 Once adsorption, retardation, or nonlinear flux laws are introduced, the wastewater system also becomes a nonlinear transport problem.
 
