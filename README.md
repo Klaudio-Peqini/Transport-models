@@ -1,4 +1,4 @@
-# Transport Models Suite: Hospital Wastewater + Analytical Buckley–Leverett Polymer Flooding                                         
+# Transport Models Suite: Hospital Wastewater + Analytical Buckley–Leverett Polymer Flooding                                          
 
 This repository brings together **two complementary modelling layers**:
 
