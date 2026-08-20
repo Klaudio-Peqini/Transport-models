@@ -1,4 +1,4 @@
-# Transport Models Suite: Hospital Wastewater + Analytical Buckley–Leverett Polymer Flooding   
+# Transport Models Suite: Hospital Wastewater + Analytical Buckley–Leverett Polymer Flooding    
 
 This repository brings together **two complementary modelling layers**:
 
@@ -17,7 +17,7 @@ This repository brings together **two complementary modelling layers**:
    - publication-quality plots
 
 The point of collecting both models in one repository is not accidental. They are connected by the same underlying mathematical language:
-**nonlinear transport, front propagation, breakthrough, and cumulative recovery / removal**.
+**nonlinear transport, front propagation, breakthrough, and cumulative recovery/removal**.
 
 ---
 
